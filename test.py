@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 boardHeight = 4
-boardWidth = 3
+boardWidth = 4
 start = "S"
 slocx = 0
 slocy = 0
@@ -12,6 +12,8 @@ glocy = 0
 goal = "G"
 turned = 2
 cosy = 0
+didBash = False
+
 def createBoard():
     board = []
     for i in range(boardWidth):
@@ -33,8 +35,8 @@ def createBoard():
 
     # check if s and g are the same
 
-    # board[slocx][slocy] = "S"
-    # board[glocx][glocy] = "G"
+    board[slocx][slocy] = 1
+    board[glocx][glocy] = 1
     print(board)
     return board
 
@@ -89,6 +91,7 @@ def search(maze, cost, start, end):
     """
 
     cc = 0
+
     # Create start and end node with initized values for g, h and f
     start_node = Node(None, tuple(start))
     start_node.g = start_node.h = start_node.f = 0
@@ -202,12 +205,12 @@ def search(maze, cost, start, end):
                 continue
 
             # Create the f, g, and h values
-            child.g = current_node.g + extraValue(child, end_node, maze) #deal with bash by getting next move
+            child.g = current_node.g  + extraValue(child, end_node, maze) #deal with bash by getting next move
             cc = extraValue(child, end_node, maze)
             print(cc)
             ## Heuristic costs calculated here, this is using eucledian distance
             child.h = 0
-
+            print(child.h)
 
             child.f = child.g + child.h
 
@@ -224,16 +227,89 @@ def extraValue(child, end_node, map):
     childx = child.position[0]
     childy = child.position[1]
 
-    if childx != end_node.position[0]:
-        return .5*map[childx][childy]
-    elif childy != end_node.position[1]:
-        return map[end_node.position[0]][end_node.position[1]]
+    totalCost = 0
+    global turned
+    #one turn
+    #Moving to the right
+    if childy == end_node.position[1] + 1:
+        if turned == 1:
+            totalCost = map[end_node.position[0]][end_node.position[1]]
+            return totalCost
+        if turned == 2:
+            totalCost = .5*map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = 1
+            return totalCost
+        if turned == -1:
+            totalCost = .5*map[childx][childy] + .5*map[childx][childy]  + map[end_node.position[0]][end_node.position[1]]
+            turned = 1
+            return totalCost
+        if turned == -2:
+            totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = 1
+            return totalCost
+    #Moving to the left
+    if childy == end_node.position[1] - 1:
+        if turned == 1:
+            totalCost = .5*map[childx][childy] + .5*map[childx][childy]  + map[end_node.position[0]][end_node.position[1]]
+            turned = -1
+            return totalCost
+        if turned == 2:
+            totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = -1
+            return totalCost
+        if turned == -1:
+            totalCost =  map[end_node.position[0]][
+                end_node.position[1]]
+            turned = -1
+            return totalCost
+        if turned == -2:
+            totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = -1
+            return totalCost
+    #Going Forward
+    if childx == end_node.position[0] - 1:
+        if turned == 1:
+            totalCost = .5*map[childx][childy]  + map[end_node.position[0]][end_node.position[1]]
+            turned = 2
+            return totalCost
+        if turned == 2:
+            totalCost =  map[end_node.position[0]][end_node.position[1]]
+            turned = 2
+            return totalCost
+        if turned == -1:
+            totalCost = .5*map[childx][childy]  + map[end_node.position[0]][end_node.position[1]]
+            turned = 2
+            return totalCost
+        if turned == -2:
+            totalCost = .5 * map[childx][childy] + .5*map[childx][childy]  + map[end_node.position[0]][end_node.position[1]]
+            turned = 2
+            return totalCost
+    #Going Backwards
+    if childx != end_node.position[0] + 1:
+        if turned == 1:
+            totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = -2
+            return totalCost
+        if turned == 2:
+            totalCost = .5 * map[childx][childy] + .5 * map[childx][childy] +map[end_node.position[0]][end_node.position[1]]
+            turned = -2
+            return totalCost
+        if turned == -1:
+            totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
+            turned = -2
+            return totalCost
+        if turned == -2:
+            totalCost =  map[end_node.position[0]][end_node.position[1]]
+            turned = -2
+            return totalCost
     else:
-        return  0
+        return 0
 
 
 if __name__ == '__main__':
-    maze = createBoard()
+    #maze = createBoard()
+    maze = [[4,1,4,6], [2,9,9,6], [1,4,1,3]]
+    print(maze)
 
     start = [2, 2]  # starting position
     end = [0, 1]  # ending position
