@@ -1,6 +1,7 @@
 
 import numpy as np
 import random
+import sys
 
 boardHeight = 4
 boardWidth = 4
@@ -305,14 +306,42 @@ def extraValue(child, end_node, map):
     else:
         return 0
 
+def parseImportedBoard(filename):
+    # Tab delimited file input to board
+    maze = []
+    row = 0
+    with open(filename) as f:
+        lines = f.readlines()
+        for line in lines:
+            lineArray = []
+            split = line.strip().split("\t")
+            col = 0
+            for number in split:
+                if (number == 'G'):
+                    goal = [row, col]
+                    lineArray.append(0)
+                elif (number == 'S'):
+                    print(str(row) +"," + str(col))
+                    start = [row, col] 
+                    lineArray.append(0)
+                else:
+                    lineArray.append(int(number))
+                col = col + 1
+            maze.append(lineArray)
+            row = row + 1
+    return maze, start, goal
 
 if __name__ == '__main__':
-    #maze = createBoard()
-    maze = [[4,1,4,6], [2,9,9,6], [1,4,1,3]]
-    print(maze)
-
-    start = [2, 2]  # starting position
-    end = [0, 1]  # ending position
+    heristicToUse = sys.argv[1]
+    if (len(sys.argv) > 1):
+        maze, start, end = parseImportedBoard(sys.argv[2]) #returns board from imported file
+    else:    
+        maze = createBoard()
+        maze = [[4,1,4,6], [2,9,9,6], [1,4,1,3]]
+        print(maze)
+        start = [2, 2]  # starting position
+        end = [0, 1]  # ending position
+    
     cost = 1  # cost per movement
 
     path = search(maze, cost, start, end)
