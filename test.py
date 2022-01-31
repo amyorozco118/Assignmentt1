@@ -1,3 +1,4 @@
+import math
 
 import numpy as np
 import random
@@ -71,7 +72,9 @@ def return_path(current_node, maze):
     # here we create the initialized result maze with -1 in every position
     result = [[-1 for i in range(no_columns)] for j in range(no_rows)]
     current = current_node
+
     while current is not None:
+        print("Current" , current.g)
         path.append(current.position)
         current = current.parent
     # Return reversed path as we need to show from start to end path
@@ -79,7 +82,30 @@ def return_path(current_node, maze):
 
     return path
 
+def when_bash(mapdata, x, y):
+    """
+    Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
+    :param mapdata [OccupancyGrid] The map information.
+    :param x       [int]           The X coordinate in the grid.
+    :param y       [int]           The Y coordinate in the grid.
+    :return        [[(int,int)]]   A list of walkable 4-neighbors.
+    """
+    # Since there are only 4 points to check a "brute force" approach is sufficient
+    neighbors = []
 
+    addy = [2, -2, 0, 0]
+    addx = [0, 0, 2, -2]
+    for i in range(len(addx)):
+        cols = 3
+        rows = 3
+
+        if cols - 1 > y + addy[i] and \
+                rows - 1 > x + addx[i] and \
+                0 <= x + addx[i] and \
+                0 <= y + addy[i]:
+            neighbors.append((x + addx[i], y + addy[i]))
+
+    return neighbors
 
 def search(maze, cost, start, end, heur):
     """
@@ -92,7 +118,7 @@ def search(maze, cost, start, end, heur):
     """
 
     cc = 0
-
+    nodes = 0
     h = heur
     # Create start and end node with initized values for g, h and f
     start_node = Node(None, tuple(start))
@@ -117,11 +143,21 @@ def search(maze, cost, start, end, heur):
 
     # what squares do we search . serarch movement is left-right-top-bottom
     # (4 movements) from every positon
+    turned = 2
+    # move = []
+    # isBash = False
+    # if isBash == False:
+    #     move = [[-1, 0],  # go up
+    #             [0, -1],  # go left
+    #             [1, 0],  # go down
+    #             [0, 1]]  # go right
+    # else:
+    #     move[-1, 0]
 
-    move = [[-1, 0],  # go up
-            [0, -1],  # go left
-            [1, 0],  # go down
-            [0, 1]]  # go right
+
+
+
+
 
     """
         1) We first get the current node by comparing all f cost and selecting the lowest cost node for further expansion
@@ -145,18 +181,36 @@ def search(maze, cost, start, end, heur):
     print(no_rows)
 
     # Loop until you find the end
+    x = 0
 
-    turned = 2
     while len(yet_to_visit_list) > 0:
-
+        move = []
+        # isBash = False
+        # if isBash == False:
+        #     move = [[-1, 0],  # go up
+        #             [0, -1],  # go left
+        #             [1, 0],  # go down
+        #             [0, 1]]  # go right
+        # else:
+        #     if(turned == 2):
+        #         move[-1, 0]
+        #     elif turned == -2:
+        #         move[1,0]
+        #     elif turned == -1:
+        #         move[0,-1]
+        #     elif turned == 1:
+        #         move[0,1]
         # Every time any node is referred from yet_to_visit list, counter of limit operation incremented
         # outer_iterations += 1
 
+        move = [[-1, 0],  # go up
+                            [0, -1],  # go left
+                            [1, 0],  # go down
+                            [0, 1]]  # go right
         # Get the current node
         current_node = yet_to_visit_list[0]
-        direction = getDirection(current_node, yet_to_visit_list[0], turned)
-        turned = direction
-        print(turned)
+
+
         current_index = 0
         for index, item in enumerate(yet_to_visit_list):
             if item.f < current_node.f:
@@ -174,35 +228,45 @@ def search(maze, cost, start, end, heur):
         visited_list.append(current_node)
 
         # test if goal is reached or not, if yes then return the path
+
+        if len(visited_list) > 1:
+            x = x+1
+            direction = getDirection(current_node, turned)
+        else:
+            direction = 2
+        turned = direction
+        print("Direction",turned)
         if current_node == end_node:
+            print("Nodes", nodes)
             return return_path(current_node, maze)
 
         # Generate children from all adjacent squares
         bash = []
 
-        # for new_position in moveBash:
-        #
-        #     # Get node position
-        #     node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-        #
-        #     # Make sure within range (check if within maze boundary)
-        #     if (node_position[0] > (no_rows - 1) or
-        #             node_position[0] < 0 or
-        #             node_position[1] > (no_columns - 1) or
-        #             node_position[1] < 0):
-        #         continue
-        #
-        #     # Make sure walkable terrain
-        #     # if maze[node_position[0]][node_position[1]] != 0:
-        #     #     continue
-        #
-        #     # Create new node
-        #     new_node = Node(current_node, node_position)
-        #
-        #     # Append
-        #     bash.append(new_node)
-        #
-        #     # Generate children from all adjacent squares
+        moveBash = when_bash(maze, current_node.position[0], current_node.position[1])
+        for new_position in moveBash:
+
+            # Get node position
+            node_position = (new_position[0],new_position[1])
+
+            # Make sure within range (check if within maze boundary)
+            if (node_position[0] > (no_rows - 1) or
+                    node_position[0] < 0 or
+                    node_position[1] > (no_columns - 1) or
+                    node_position[1] < 0):
+                continue
+
+            # Make sure walkable terrain
+            # if maze[node_position[0]][node_position[1]] != 0:
+            #     continue
+
+            # Create new node
+            new_node = Node(current_node, node_position)
+
+            # Append
+            bash.append(new_node)
+
+            # Generate children from all adjacent squares
         children = []
 
         for new_position in move:
@@ -230,22 +294,27 @@ def search(maze, cost, start, end, heur):
 
         for child in children:
 
+            isBash = False
             # Child is on the visited list (search entire visited list)
             if len([visited_child for visited_child in visited_list if visited_child == child]) > 0:
                 continue
 
             # Create the f, g, and h values
-            child.g = current_node.g + extraValue(child, end_node, maze, direction)  # deal with bash by getting next move
+            child.g = current_node.g + extraValue( child, current_node, maze, direction)
+            print("Cost of g", child.g)
+            # deal with bash by getting next move
             cc = extraValue(child, end_node, maze, direction)
             print(cc)
             ## Heuristic costs calculated here, this is using eucledian distance
-            child.h = 0
+            child.h = getHeur(heur, current_node, end_node, child)
             print(child.h)
 
             child.f = child.g + child.h
-
+            nodes = nodes + 1
+            print("Cost",child.f)
             # Child is already in the yet_to_visit list and g cost is already lower
-            if len([i for i in yet_to_visit_list if child == i and child.g > i.g]) > 0:
+            if len([i for i in yet_to_visit_list if child == i and child.f > i.f]) > 0:
+
                 continue
 
             # Add the child to the yet_to_visit list
@@ -253,20 +322,14 @@ def search(maze, cost, start, end, heur):
             print(child.position)
 
         # for child in bash:
+        #     isBash = True
         #     if len([visited_child for visited_child in visited_list if visited_child == child]) > 0:
         #         continue
-        #
-        #     # Create the f, g, and h values
-        #     child.g = 3 + maze[next[1]][next[0]]  # deal with bash by getting next move
-        #     cc = extraValue(child, end_node, maze)
-        #     print(cc)
-        #     ## Heuristic costs calculated here, this is using eucledian distance
-        #     child.h =  getHeur(h, current_node, goal, next)
-        #     print(child.h)
-        #
+        #     child.g = 3 + maze[child.position[0]][child.position[1]]  # deal with bash by getting next move
+        #     child.h = 0
         #     child.f = child.g + child.h
         #
-        #     # Child is already in the yet_to_visit list and g cost is already lower
+        #     nodes = nodes + 1
         #     if len([i for i in yet_to_visit_list if child == i and child.f > i.f]) > 0:
         #
         #         continue
@@ -275,33 +338,15 @@ def search(maze, cost, start, end, heur):
         #     yet_to_visit_list.append(child)
         #     print(child.position)
 
-        #     cell_cost = 3 + maze[next[1]][next[0]]
-        #     cost = cost- cell_cost
-        #     print("cost", cost)
-        #
-        #
-        #     heur_cost = cell_cost + getHeur(h, current_node, goal, next, cost_so_far)
-        #     print(h)
-        #     print("heur",heur_cost)
-        #     new_cost =  heur_cost
-        #         # If we've explored this far yet or if the cost is less than anything currently existing
-        #     if next not in cost_so_far or new_cost < cost_so_far[next]:
-        #             # We set this new cost to our total cost so far
-        #             cost_so_far[next] = new_cost
-        #             cost = cost - cell_cost
-        #             print("cell_cost", cost)
-        #             # we calculate the A* function using manhattan and euclidean distance
-        #             priority = new_cost
-        #
-        #             # we put the point into the fronter with it's A* priority and mark where we came from to get here
-        #             frontier.put(next, priority)
-        #             came_from[next] = current
 
 
-def getDirection(child,end_node, turned):
+
+
+def getDirection(child, turned):
     childx = child.position[0]
     childy = child.position[1]
 
+    end_node = child.parent
     if childy == end_node.position[1] + 1:
         if turned == 1:
             return turned
@@ -343,7 +388,7 @@ def getDirection(child,end_node, turned):
             turned = 2
             return turned
         # Going Backwards
-    if childx != end_node.position[0] + 1:
+    if childx == end_node.position[0] + 1:
         if turned == 1:
             turned = -2
             return turned
@@ -357,7 +402,7 @@ def getDirection(child,end_node, turned):
             turned = -2
             return turned
     else:
-        return 0
+        return turned
 
 
 def extraValue(child, end_node, map, dire):
@@ -371,78 +416,78 @@ def extraValue(child, end_node, map, dire):
     if childy == end_node.position[1] + 1:
         if turned == 1:
             totalCost = map[end_node.position[0]][end_node.position[1]]
-            return totalCost
+            return math.ceil(totalCost)
         if turned == 2:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = 1
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -1:
             totalCost = .5 * map[childx][childy] + .5 * map[childx][childy] + map[end_node.position[0]][
                 end_node.position[1]]
             turned = 1
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -2:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = 1
-            return totalCost
+            return math.ceil(totalCost)
     # Moving to the left
     if childy == end_node.position[1] - 1:
         if turned == 1:
             totalCost = .5 * map[childx][childy] + .5 * map[childx][childy] + map[end_node.position[0]][
                 end_node.position[1]]
             turned = -1
-            return totalCost
+            return math.ceil(totalCost)
         if turned == 2:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = -1
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -1:
             totalCost =  map[end_node.position[0]][
                 end_node.position[1]]
             turned = -1
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -2:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = -1
-            return totalCost
+            return math.ceil(totalCost)
     # Going Forward
     if childx == end_node.position[0] - 1:
         if turned == 1:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = 2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == 2:
-            totalCost = map[end_node.position[0]][end_node.position[1]]
+            totalCost = map[childx][childy]
             turned = 2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -1:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = 2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -2:
             totalCost = .5 * map[childx][childy] + .5 * map[childx][childy] + map[end_node.position[0]][
                 end_node.position[1]]
             turned = 2
-            return totalCost
+            return math.ceil(totalCost)
     # Going Backwards
-    if childx != end_node.position[0] + 1:
+    if childx == end_node.position[0] + 1:
         if turned == 1:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = -2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == 2:
             totalCost = .5 * map[childx][childy] + .5 * map[childx][childy] + map[end_node.position[0]][
                 end_node.position[1]]
             turned = -2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -1:
             totalCost = .5 * map[childx][childy] + map[end_node.position[0]][end_node.position[1]]
             turned = -2
-            return totalCost
+            return math.ceil(totalCost)
         if turned == -2:
             totalCost = map[end_node.position[0]][end_node.position[1]]
             turned = -2
-            return totalCost
+            return math.ceil(totalCost)
     else:
         return 0
 
@@ -522,21 +567,21 @@ def parseImportedBoard(filename):
     return maze, start, goal
 
 def getHeur(heur, current, goal, next):
-        vertDis = abs(goal[1] - next[1])
-        horDist = abs(goal[0] - next[0])
+        vertDis = abs(goal.position[1] - next.position[1])
+        horDist = abs(goal.position[0] - next.position[0])
 
         cost_so_far = 0
         if heur == 1:
-            heurCost = cost_so_far[current]
+            heurCost = current.h
             return heurCost
         if heur == 2:
-            heurCost = cost_so_far[current] + min(vertDis, horDist)
+            heurCost = current.h + min(vertDis, horDist)
             return heurCost
         if heur == 3:
-            heurCost = cost_so_far[current] + max(vertDis, horDist)
+            heurCost = current.h + max(vertDis, horDist)
             return heurCost
         if heur == 4:
-            heurCost = cost_so_far[current] + vertDis + horDist
+            heurCost = current.h + vertDis + horDist
             return heurCost
 
 if __name__ == '__main__':
@@ -545,12 +590,12 @@ if __name__ == '__main__':
     #     maze, start, end = parseImportedBoard(sys.argv[2])  # returns board from imported file
     # else:
         #maze = createBoard()
-    maze = [[4, 1, 4, 6], [2, 9, 9, 6], [1, 4, 1, 3]]
+    maze = [[4, 1, 4, 6], [2, 9, 9, 6], [1, 1, 1, 3]]
     print(maze)
-    start = [2, 2]  # starting position
-    end = [0, 1]  # ending position
+    start = (2, 2)  # starting position
+    end = (2,1)  # ending position
 
     cost = 1  # cost per movement
 
-    path = search(maze, cost, start, end, 2)
+    path = search(maze, cost, start, end, 1)
     print(path)
